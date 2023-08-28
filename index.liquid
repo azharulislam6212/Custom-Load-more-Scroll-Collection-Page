@@ -1,0 +1,203 @@
+           {%- paginate collection.products by section.settings.products_per_page -%}
+           
+           
+           {%- assign paginate_checker = paginate.current_page | times: section.settings.products_per_page -%}
+            {%- if paginate.items > paginate_checker -%}
+              {%- assign paginate_final = paginate_checker -%}
+              {%- else -%}
+              {%- assign paginate_final = paginate.items -%}
+              {%- endif -%}
+              {% assign count = paginate_final | times: 1.0 %}
+              {% assign total = collection.products_count | times: 1.0 %}
+
+              {% assign percent = count | divided_by: total | times: 100 %}
+     
+            <load-more class="load-more_wrap" 
+              data-next-url="{{ paginate.next.url }}"
+              data-current-page="{{ paginate.current_page  }}" 
+              data-total-pages="{{ paginate.pages }}"
+              data-page-size="{{ paginate.page_size }}" 
+              data-total-items="{{paginate.items}}">
+
+              <div class="counter-progress">
+                    
+                <div class="progress" load-progress>
+                  <div class="bar" style="width:{{percent}}%"> </div>
+                </div>
+                <span class="show-counter-text" >Showing <span class="shoing_item" load-items-count>  {{ paginate.page_size }} </span> of <span class="total-item">{{paginate.items}}</span> Items</span>
+
+              </div>
+
+            <button class="button btn-load-more js-load-more" type="button">Load more</button>
+         
+          </load-more>
+
+          
+        {%- endpaginate -%}
+
+
+
+<style>
+
+
+
+
+.infinite-Pagination {
+  display: block;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto 16px;
+  width: 100%;
+}
+
+.load-more_wrap{
+  display: block;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto 16px;
+  width: 100%;
+}
+
+
+
+.show-counter-text{
+  color: #1C1C1C;
+text-align: center;
+font-family: 'Univers Next Pro';
+font-size: 11px;
+font-style: normal;
+font-weight: 600;
+line-height: 20.4px; 
+letter-spacing: 2.16px;
+margin-top: 0;
+}
+
+
+.bar {
+	position:relative;
+  float:left;
+  min-width:1%;
+  height:100%;
+  background:#000;
+  border-radius:32px;
+}
+
+
+
+.progress {
+  margin:8px auto 8px;
+  padding:0;
+  width:100%;
+  height:8px;
+  background: rgba(146, 146, 146, 0.4);
+  border-radius:32px;
+}
+
+.counter-progress{
+  position: relative;
+  margin: 0 auto 16px;
+  text-align: center;
+}
+
+.btn-load-more{
+  color: #FFF;
+  text-align: center;
+  font-family:'Univers Next Pro';
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%; /* 15.6px */
+  letter-spacing: 2.34px;
+  text-transform: uppercase;
+  padding: 16px;
+  height: 48px;
+  width: 100%;
+}
+
+
+@media screen and (max-width: 699px) {
+  .infinite-Pagination {
+   margin-bottom: 40px;
+  }
+  
+.show-counter-text{
+  font-size: 11px;
+  line-height: 20.4px; /* 185.455% */
+  letter-spacing: 2.16px;
+}
+  .btn-load-more{
+    font-size: 13px;
+    line-height: 120%;
+    letter-spacing: 2.34px;
+  }
+
+}
+
+
+
+</style>
+
+
+
+        <script>
+
+
+  class LoadMore extends HTMLElement {
+    constructor() {
+     super();
+     this.addEventListener("click", this.loadMoreItems);
+    }
+   loadMoreItems() { 
+    const loadMoreBtn = this.querySelector('[type="button"]');
+    let { currentPage, pageSize, nextUrl, totalItems } = this.dataset
+    let nextPage = parseInt(this.dataset.currentPage) + 1
+   fetch(nextUrl.replace(/page=[0-9]+/, 'page=' + nextPage))
+    .then(response => response.text())
+    .then((responseText) => {
+     const html = responseText;
+     $('.product-list')
+      .append($(html)
+      .find('.product-list')
+      .html());
+     })
+    .catch((e) => {
+        console.error(e);
+     })
+    .finally(() => {
+     this.dataset.currentPage = parseInt(this.dataset.currentPage) + 1;
+
+
+
+     let isLastPage = parseInt(totalItems) - (nextPage * parseInt(pageSize)) < 0
+
+
+      
+       let currentItems = nextPage * parseInt(pageSize);
+       let percent= 0;
+        if(totalItems > currentItems ){
+           percent = (currentItems / parseInt(totalItems)) * 100;
+        }else{
+            let item = parseInt(totalItems) - currentItems;
+            let total = currentItems + item
+            percent = (total / parseInt(totalItems)) * 100;
+        }
+
+
+
+
+          {% comment %} console.log("total totalItems: "+nextPage);
+      console.log("total currentItems: "+pageSize ); {% endcomment %}
+
+
+
+     this.querySelector('[load-progress]').innerHTML = '<div class="bar" style="width:'+percent+'%"> </div>';
+     this.querySelector('[load-items-count]').innerHTML = isLastPage ? parseInt(totalItems) : nextPage * parseInt(pageSize);
+     isLastPage && loadMoreBtn.setAttribute("disabled", true);
+    });
+    }
+   }
+   customElements.define('load-more', LoadMore);
+
+
+
+</script>
